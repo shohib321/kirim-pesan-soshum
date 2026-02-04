@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Notifikasi Guru ke Kelompok</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/charts/loader.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-gray-50 min-h-screen p-4 md:p-6">
+    <div class="max-w-2xl mx-auto">
+        <!-- Header -->
+        <div class="mb-6 md:mb-8">
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
+                <i class="fas fa-paper-plane text-blue-600 mr-2"></i>
+                Kirim Pesan ke Kelompok
+            </h1>
+            <p class="text-gray-600">Gunakan formulir ini untuk mengirim pesan atau notifikasi kepada kelompok siswa</p>
+        </div>
+
+        <!-- Card Utama -->
+        <div class="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200">
+            <div class="p-6 md:p-8 space-y-6">
+                <!-- Dropdown Pilih Ketua -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-user-graduate text-blue-500 mr-1"></i>
+                        Pilih Ketua Kelompok
+                    </label>
+                    <div class="relative">
+                        <select id="ketua" 
+                            class="w-full border border-gray-300 rounded-xl p-3 pl-10 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all appearance-none bg-white">
+                            <option value="">-- Pilih Nama Ketua Kelompok --</option>
+                        </select>
+                        <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Kelompok (Auto Fill) -->
+                <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 md:p-5 space-y-3">
+                    <h3 class="font-semibold text-blue-800 flex items-center">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Informasi Kelompok
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Anggota Kelompok</label>
+                            <input id="anggota" readonly
+                                class="w-full border border-gray-200 rounded-lg p-3 bg-white text-gray-800">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Kategori</label>
+                            <input id="kategori" readonly
+                                class="w-full border border-gray-200 rounded-lg p-3 bg-white text-gray-800">
+                        </div>
+                        
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Judul Projek</label>
+                            <input id="judul" readonly
+                                class="w-full border border-gray-200 rounded-lg p-3 bg-white text-gray-800">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Pesan -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-comment-dots text-blue-500 mr-1"></i>
+                        Pesan untuk Kelompok
+                    </label>
+                    <div class="relative">
+                        <textarea id="pesan" rows="5"
+                            class="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                            placeholder="Tulis pesan, catatan, atau instruksi untuk kelompok ini..."></textarea>
+                        <div class="absolute bottom-3 right-3 text-gray-400">
+                            <i class="fas fa-edit"></i>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">Pesan akan dikirim ke seluruh anggota kelompok</p>
+                </div>
+
+                <!-- Tombol Kirim -->
+                <button onclick="kirimPesan()"
+                    class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 px-4 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center group">
+                    <i class="fas fa-paper-plane mr-2 group-hover:scale-110 transition-transform"></i>
+                    Kirim Pesan ke Kelompok
+                </button>
+            </div>
+            
+            <!-- Status Notifikasi -->
+            <div id="statusContainer" class="hidden px-6 md:px-8 pb-6">
+                <div id="status" class="rounded-xl p-4 text-center"></div>
+            </div>
+        </div>
+
+        <!-- Info Footer -->
+        <div class="mt-6 text-center text-gray-500 text-sm">
+            <p><i class="fas fa-database mr-1"></i> Data diambil dari Google Sheets secara real-time</p>
+        </div>
+    </div>
+
+    <!-- Modal Notifikasi Sukses -->
+    <div id="successModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all">
+            <div class="text-center">
+                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                    <i class="fas fa-check-circle text-green-600 text-3xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Pesan Terkirim!</h3>
+                <p class="text-gray-600 mb-6">Pesan Anda telah berhasil dikirim ke seluruh anggota kelompok.</p>
+                <button onclick="closeSuccessModal()"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl transition-colors">
+                    Oke, Mengerti
+                </button>
+            </div>
+        </div>
+    </div>
+
+<script>
+google.charts.load('current', {packages:['table']});
+google.charts.setOnLoadCallback(loadData);
+
+const sheetId = "1YPD4iWjoDN59wKtCXFomwjAcIrAjGLWir8Ul-4imlpI";
+const sheetName = "Sheet1";
+let rows = [];
+
+function loadData(){
+    // Menampilkan loading state di dropdown
+    ketua.innerHTML = `<option value="">-- Memuat data... --</option>`;
+    
+    const query = `
+        SELECT B,C,D,E
+    `;
+    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?sheet=${sheetName}&tq=${encodeURIComponent(query)}`;
+    
+    new google.visualization.Query(url).send(res=>{
+        if (res.isError()) {
+            ketua.innerHTML = `<option value="">-- Gagal memuat data --</option>`;
+            return;
+        }
+        
+        const data = res.getDataTable();
+        ketua.innerHTML = `<option value="">-- Pilih Nama Ketua Kelompok --</option>`;
+        
+        for(let i=0;i<data.getNumberOfRows();i++){
+            const obj = {
+                ketua:data.getValue(i,0),
+                anggota:data.getValue(i,1),
+                kategori:data.getValue(i,2),
+                judul:data.getValue(i,3)
+            };
+            rows.push(obj);
+            ketua.innerHTML += `<option>${obj.ketua}</option>`;
+        }
+    });
+}
+
+function isiData(){
+    const d = rows.find(r=>r.ketua===ketua.value);
+    if(!d) {
+        anggota.value = "";
+        kategori.value = "";
+        judul.value = "";
+        return;
+    }
+    
+    anggota.value = d.anggota;
+    kategori.value = d.kategori;
+    judul.value = d.judul;
+}
+
+function kirimPesan(){
+    if(!ketua.value){
+        showStatus("Pilih ketua kelompok terlebih dahulu", "error");
+        ketua.focus();
+        return;
+    }
+    
+    if(!pesan.value.trim()){
+        showStatus("Tulis pesan terlebih dahulu", "error");
+        pesan.focus();
+        return;
+    }
+
+    // Tampilkan status loading
+    showStatus("Mengirim pesan...", "loading");
+    
+    fetch("https://script.google.com/macros/s/AKfycbxTWG78COjHM6qdceCOJ8gHeSOdXrmnyp7fM5F5EnLqpLntR4W8Mflg5noK70FmEGMq/exec",{
+        method:"POST",
+        body:JSON.stringify({
+            namaKetua: ketua.value,
+            namaAnggota: anggota.value,
+            pesan: pesan.value
+        })
+    })
+    .then(()=> {
+        // Tampilkan modal sukses
+        document.getElementById('successModal').classList.remove('hidden');
+        
+        // Reset form
+        ketua.value = "";
+        anggota.value = "";
+        kategori.value = "";
+        judul.value = "";
+        pesan.value = "";
+        
+        // Sembunyikan status container
+        document.getElementById('statusContainer').classList.add('hidden');
+    })
+    .catch(error => {
+        showStatus("Gagal mengirim pesan. Coba lagi.", "error");
+        console.error("Error:", error);
+    });
+}
+
+function showStatus(message, type) {
+    const statusContainer = document.getElementById('statusContainer');
+    const statusElement = document.getElementById('status');
+    
+    statusContainer.classList.remove('hidden');
+    
+    // Set warna berdasarkan tipe status
+    if (type === "error") {
+        statusElement.className = "rounded-xl p-4 text-center bg-red-50 border border-red-200 text-red-700";
+        statusElement.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i> ${message}`;
+    } else if (type === "loading") {
+        statusElement.className = "rounded-xl p-4 text-center bg-blue-50 border border-blue-200 text-blue-700";
+        statusElement.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> ${message}`;
+    } else {
+        statusElement.className = "rounded-xl p-4 text-center bg-green-50 border border-green-200 text-green-700";
+        statusElement.innerHTML = `<i class="fas fa-check-circle mr-2"></i> ${message}`;
+    }
+}
+
+function closeSuccessModal() {
+    document.getElementById('successModal').classList.add('hidden');
+}
+
+// Event listener untuk dropdown
+document.getElementById('ketua').addEventListener('change', isiData);
+
+// Event listener untuk textarea
+document.getElementById('pesan').addEventListener('focus', function() {
+    this.parentElement.classList.add('ring-2', 'ring-blue-500', 'border-blue-500');
+});
+
+document.getElementById('pesan').addEventListener('blur', function() {
+    this.parentElement.classList.remove('ring-2', 'ring-blue-500', 'border-blue-500');
+});
+</script>
+
+</body>
+</html>
